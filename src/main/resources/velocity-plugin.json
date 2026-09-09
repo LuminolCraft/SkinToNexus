@@ -1,0 +1,9 @@
+{
+  "id": "skintonexus",
+  "name": "SkinToNexus",
+  "version": "${version}",
+  "main": "org.luminolcraft.skinToNexus.Main",
+  "authors": [
+    "NatJerry"
+  ]
+}
