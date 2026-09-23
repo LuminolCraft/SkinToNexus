@@ -76,7 +76,8 @@ class ConfigManager {
         url = config.getOrElse("api-base-url", "http://localhost:8787");
         run {
             val uri = URI.create(url)
-            if (!uri.scheme.equals("https", true) && !uri.scheme.equals("http", true)) {
+            if (uri.scheme == null) url = "http://localhost:8787"
+            else if (!uri.scheme.equals("https", true) && !uri.scheme.equals("http", true)) {
                 url = "http://localhost:8787"
             }
         }

@@ -35,7 +35,7 @@ class Main @Inject constructor(val logger: Logger, val server: ProxyServer, @Dat
         lateinit var configManager: ConfigManager
         val gson = Gson()
         private val skinChangeMap = Collections.synchronizedMap(LinkedHashMap<String, String>())
-        private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+        private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
         @Volatile
         private var timerJob: Job? = null
@@ -59,7 +59,7 @@ class Main @Inject constructor(val logger: Logger, val server: ProxyServer, @Dat
                     } catch (e: CancellationException) {
                         return@launch
                     } catch (e: Exception) {
-                        instance.logger.error("Error while posting skin changes.")
+                        instance.logger.error("Error while posting skin changes." + e.message)
                         delay(Duration.ofMinutes(configManager.patchInterval.toLong()))
                         continue
                     }
@@ -94,6 +94,10 @@ class Main @Inject constructor(val logger: Logger, val server: ProxyServer, @Dat
             install(ContentNegotiation) {
                 json()
             }
+            followRedirects = true
+            install(HttpRedirect) {
+                checkHttpMethod = false
+            }
             install(HttpTimeout) {
                 requestTimeoutMillis = configManager.requestTimeoutSec.toLong() * 1000
                 connectTimeoutMillis = configManager.connectionTimeoutSec.toLong() * 1000
@@ -116,6 +120,7 @@ class Main @Inject constructor(val logger: Logger, val server: ProxyServer, @Dat
         configManager.stopWatchConfig()
         stopTimerTask()
         scope.cancel()
+        httpClient.close()
     }
 
     @Subscribe
