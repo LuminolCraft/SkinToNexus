@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     kotlin("jvm") version "2.4.20"
     id("com.gradleup.shadow") version "9.6.1"
@@ -28,6 +30,11 @@ kotlin {
 tasks {
     build {
         dependsOn(shadowJar)
+    }
+
+    named<ShadowJar>("shadowJar") {
+        relocate("com.electronwill.nightconfig", "org.luminolcraft.skinToNexus.lib.nightconfig")
+        relocate("org.yaml.snakeyaml", "org.luminolcraft.skinToNexus.lib.snakeyaml")
     }
 
 
