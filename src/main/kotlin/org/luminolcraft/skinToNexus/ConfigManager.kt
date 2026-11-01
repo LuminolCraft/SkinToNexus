@@ -1,6 +1,9 @@
 package org.luminolcraft.skinToNexus
 
+import com.electronwill.nightconfig.core.CommentedConfig
+import com.electronwill.nightconfig.core.ConfigFormat
 import com.electronwill.nightconfig.core.file.CommentedFileConfig
+import com.electronwill.nightconfig.yaml.YamlFormat
 import java.io.File
 import java.net.URI
 import java.util.concurrent.Executors
@@ -8,7 +11,14 @@ import java.util.concurrent.TimeUnit
 
 class ConfigManager {
     private val configFile = File(Main.dataDirectory.toFile(), "config.yml")
-    private val config = CommentedFileConfig.of(configFile)
+    // 显式传格式，绕开 FormatDetector：父加载器里那份 night-config-core 看不到插件 shade 的 yaml 模块，
+    // 探测会返回 null 并抛 NoFormatFoundException。YamlFormat 走常量池，由插件加载器解析。
+    // 强转为必需：YamlFormat 实现的是 ConfigFormat<Config>，该重载要 ConfigFormat<? extends CommentedConfig>。
+    @Suppress("UNCHECKED_CAST")
+    private val config: CommentedFileConfig = CommentedFileConfig.of(
+        configFile,
+        YamlFormat.defaultInstance() as ConfigFormat<CommentedConfig>
+    )
     private val scheduler = Executors.newSingleThreadScheduledExecutor()
     private var lastModified = 0L
 
@@ -35,7 +45,14 @@ class ConfigManager {
             if (!configFile.parentFile.exists()) configFile.parentFile.mkdirs()
             configFile.createNewFile()
         }
-        config.load()
+        // night-config 3.9.0 的 YamlParser 对空文档会直接 NPE：snakeyaml 返回 null 后仍调用 map.entrySet()。
+        // 首次运行走到这里时 config.yml 刚被 createNewFile() 成 0 字节，或用户只留了注释。
+        // 因此只有文件里真的存在键值时才解析，否则保持默认值，稍后由 config.save() 写成合法 YAML。
+        val hasContent = configFile.length() > 0L &&
+            configFile.useLines { lines -> lines.any { it.isNotBlank() && !it.trimStart().startsWith("#") } }
+        if (hasContent) {
+            config.load()
+        }
         var shouldSave = false
         if (config.get<String>("api-base-url") == null) {
             config.set<String>("api-base-url", "http://localhost:8787")
