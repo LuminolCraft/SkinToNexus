@@ -5,5 +5,11 @@
   "main": "org.luminolcraft.skinToNexus.Main",
   "authors": [
     "NatJerry"
+  ],
+  "dependencies": [
+    {
+      "id": "skinsrestorer",
+      "optional": false
+    }
   ]
 }
