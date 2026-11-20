@@ -32,7 +32,7 @@ Velocity 代理端插件：监听 SkinsRestorer 的皮肤切换事件，把「�
 | `api-base-url` | string | `http://localhost:8787` | 后端地址，需带 `http://` 或 `https://`。缺失 scheme 或非法地址会回退为默认值 |
 | `secret` | string | `some-fucking-secret` | 共享密钥，作为 `X-Webhook-Secret` 请求头发送，必须与后端环境变量 `WEBHOOK_SECRET` 一致 |
 | `patch-interval-min` | int | `10` | 上报周期，单位分钟。`<= 0` 会被钳制为 `Int.MAX_VALUE`，等于停用上报 |
-| `max-element-per-patch` | int | `500` | 单次上报的最大条数。`<= 0` 视为不限量 |
+| `max-element-per-patch` | int | `100` | 单次上报的最大条数，硬钳制在 1-100（后端单批上限 100，超出返回 400） |
 | `connect-timeout-seconds` | int | `5` | 连接超时，单位秒。`<= 0` 会被钳制为 `Int.MAX_VALUE` |
 | `request-timeout-seconds` | int | `10` | 请求超时，单位秒。`<= 0` 会被钳制为 `Int.MAX_VALUE` |
 

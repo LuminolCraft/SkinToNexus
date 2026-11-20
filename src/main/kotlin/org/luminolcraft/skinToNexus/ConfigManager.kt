@@ -72,8 +72,8 @@ class ConfigManager {
             shouldSave = true
         }
         if (config.get<Int>("max-element-per-patch") == null) {
-            config.set<Int>("max-element-per-patch", 500)
-            config.setComment("max-element-per-patch", """配置每次向后端发送更新皮肤数据的最大量""")
+            config.set<Int>("max-element-per-patch", 100)
+            config.setComment("max-element-per-patch", """配置每次向后端发送更新皮肤数据的最大量（后端单批上限 100）""")
             shouldSave = true
         }
         if (config.get<Int>("connect-timeout-seconds") == null) {
@@ -103,11 +103,11 @@ class ConfigManager {
         if (patchInterval <= 0) {
             patchInterval = Int.MAX_VALUE
         }
-        maxElementPerPatch = config.getOrElse("max-element-per-patch", 500)
-        if (maxElementPerPatch <= 0) {
-            maxElementPerPatch = Int.MAX_VALUE
-        }
-        connectionTimeoutSec = config.getOrElse("connection-timeout-seconds", 5)
+        // 后端 SkinBatchSchema 限制单批 ≤ 100 条，超出返回 400 VALIDATION_ERROR；
+        // 而插件只在 2xx 才移除条目，超批发出去会被永久拒绝，形成死循环。硬钳到 100。
+        maxElementPerPatch = config.getOrElse("max-element-per-patch", 100)
+            .coerceIn(1, 100)
+        connectionTimeoutSec = config.getOrElse("connect-timeout-seconds", 5)
         if (connectionTimeoutSec <= 0) {
             connectionTimeoutSec = Int.MAX_VALUE
         }
